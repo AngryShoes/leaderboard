@@ -8,7 +8,7 @@
             <summary>
             update customer score
             </summary>
-            <param name="customerId">customer id</param>
+            <param name="customerid">customer id</param>
             <param name="score">customer score</param>
             <returns></returns>
         </member>

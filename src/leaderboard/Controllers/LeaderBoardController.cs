@@ -23,7 +23,7 @@ namespace leaderboard.Controllers
         [HttpPost("customer/{customerid}/score/{score}")]
         public async Task<IActionResult> UpdateScore(int customerid, [FromRoute] int score)
         {
-            if (score <= -1000 || score >= 1000)
+            if (score < -1000 || score > 1000)
             {
                 return BadRequest("score should between -1000 and 1000");
             }
@@ -37,7 +37,7 @@ namespace leaderboard.Controllers
         /// <param name="start"> start rank </param>
         /// <param name="end"> end rank </param>
         /// <returns>customer list</returns>
-        [HttpGet("leaderboards")]
+        [HttpGet("leaderboard")]
         public async Task<IActionResult> GetLeaderboards(int start, int end)
         {
             var result = await _leaderBoardService.GetLeaderboards(start, end);
@@ -52,7 +52,7 @@ namespace leaderboard.Controllers
         /// <param name="low"></param>
         /// <returns></returns>
         [HttpGet("leaderboard/{customerid}")]
-        public async Task<IActionResult> GetNeighborCustomers(int customerid, int high, int low)
+        public async Task<IActionResult> GetNeighborCustomers(int customerid, int high = 0, int low = 0)
         {
             var result = await _leaderBoardService.GetNeighborCustomers(customerid, high, low);
             return Ok(result);
