@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>leaderboard</name>
+    </assembly>
+    <members>
+        <member name="M:leaderboard.Controllers.LeaderBoardController.UpdateScore(System.Int32,System.Int32)">
+            <summary>
+            update customer score
+            </summary>
+            <param name="customerId">customer id</param>
+            <param name="score">customer score</param>
+            <returns></returns>
+        </member>
+        <member name="M:leaderboard.Controllers.LeaderBoardController.GetLeaderboards(System.Int32,System.Int32)">
+            <summary>
+            Get customer leaderboards by rank
+            </summary>
+            <param name="start"> start rank </param>
+            <param name="end"> end rank </param>
+            <returns>customer list</returns>
+        </member>
+        <member name="M:leaderboard.Controllers.LeaderBoardController.GetNeighborCustomers(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get neighbor customers by range of rank 
+            </summary>
+            <param name="customerid"></param>
+            <param name="high"></param>
+            <param name="low"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
