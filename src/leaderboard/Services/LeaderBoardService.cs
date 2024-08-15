@@ -8,34 +8,37 @@ namespace leaderboard.Services
         private readonly ConcurrentDictionary<int, Customer> _customers = new ConcurrentDictionary<int, Customer>();
         private readonly SortedDictionary<decimal, SortedSet<int>> _scores = new(Comparer<decimal>.Create((a, b) => b.CompareTo(a)));
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        #region Get neighbor customers by specified customer id and range of rank
         public async Task<IEnumerable<Customer>> GetNeighborCustomers(int customerId, int high, int low)
         {
             _lock.EnterReadLock();
             try
             {
-                var result = new List<Customer>();
                 if (!_customers.TryGetValue(customerId, out var customer))
-                    return result;
-                var currentCustomerRank = _scores.Values.SelectMany(x => x).ToList().IndexOf(customerId) + 1;
+                    return Enumerable.Empty<Customer>();
+                int currentCustomerRank = GetCustomerRank(customerId);
                 int startRank = Math.Max(1, currentCustomerRank - high);
                 int endRank = currentCustomerRank + low;
                 var neighborScores = _scores.Skip(startRank - 1).Take(endRank - startRank + 1);
-                foreach (var kvp in neighborScores)
-                {
-                    foreach (var id in kvp.Value)
-                    {
-                        result.Add(new Customer(id, score: kvp.Key) { Rank = startRank });
-                        startRank++;
-                    }
-                }
-                return await Task.FromResult(result);
+                var customers = GetCustomers(startRank, neighborScores);
+                return await Task.FromResult(customers);
             }
             finally
             {
                 _lock.ExitReadLock();
             }
         }
+        private int GetCustomerRank(int customerId)
+        {
+            return _scores.Values.SelectMany(x => x).ToList().IndexOf(customerId) + 1;
+        }
+        private List<Customer> GetCustomers(int startRank, IEnumerable<KeyValuePair<decimal, SortedSet<int>>> neighborScores)
+        {
+            return neighborScores.SelectMany(kvp => kvp.Value.Select(id => new Customer(id, score: kvp.Key) { Rank = startRank++ })).ToList();
+        }
+        #endregion
 
+        #region Get customer leaderboards by range of rank
         public async Task<IEnumerable<Customer>> GetLeaderboards(int start, int end)
         {
             _lock.EnterReadLock();
@@ -61,7 +64,9 @@ namespace leaderboard.Services
                 _lock.ExitReadLock();
             }
         }
+        #endregion
 
+        #region Update Score
         public async Task<decimal> UpdateScore(int customerId, decimal changeScore)
         {
             _lock.EnterWriteLock();
@@ -71,17 +76,22 @@ namespace leaderboard.Services
                 var oldScore = customer.Score;
                 customer.CalculateScore(changeScore);
                 var newScore = customer.Score;
-                UpdateOldScoreSet(customerId, oldScore);
-                UpdateNewScoreSet(customerId, newScore);
+                RecalculateLeaderboard(customerId, oldScore, newScore);
                 _scores[customer.Score].Add(customerId);
                 return await Task.FromResult(customer.Score);
             }
-            finally 
+            finally
             {
-                _lock.ExitWriteLock(); 
+                _lock.ExitWriteLock();
             }
         }
-        private void UpdateOldScoreSet(int customerId, decimal oldScore)
+
+        private void RecalculateLeaderboard(int customerId, decimal oldScore, decimal newScore)
+        {
+            RemoveOldCustomerScore(customerId, oldScore);
+            AddNewCustomerScore(customerId, newScore);
+        }
+        private void RemoveOldCustomerScore(int customerId, decimal oldScore)
         {
             if (_scores.ContainsKey(oldScore))
             {
@@ -92,8 +102,7 @@ namespace leaderboard.Services
                 }
             }
         }
-
-        private void UpdateNewScoreSet(int customerId, decimal newScore)
+        private void AddNewCustomerScore(int customerId, decimal newScore)
         {
             if (!_scores.ContainsKey(newScore))
             {
@@ -101,5 +110,6 @@ namespace leaderboard.Services
             }
             _scores[newScore].Add(customerId);
         }
+        #endregion
     }
 }
