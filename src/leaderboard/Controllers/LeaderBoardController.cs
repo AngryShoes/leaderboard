@@ -1,5 +1,6 @@
 using leaderboard.Models;
 using leaderboard.Services;
+using leaderboard.Validators;
 using Microsoft.AspNetCore.Mvc;
 
 namespace leaderboard.Controllers
@@ -21,13 +22,15 @@ namespace leaderboard.Controllers
         /// <param name="score">customer score</param>
         /// <returns></returns>
         [HttpPost("customer/{customerid}/score/{score}")]
-        public async Task<IActionResult> UpdateScore(int customerid, [FromRoute] int score)
+        public async Task<IActionResult> UpdateScore([FromRoute] int customerid, [FromRoute] decimal score)
         {
-            if (score < -1000 || score > 1000)
+            var model = new UpdateCustomerScoreModel { CustomerId = customerid, Score = score };
+            var validateResult = await new CustomerValidator().ValidateAsync(model);
+            if (!validateResult.IsValid)
             {
-                return BadRequest("score should between -1000 and 1000");
+                return BadRequest(validateResult.Errors.Select(x => x.ErrorMessage));
             }
-            var result = await _leaderBoardService.UpdateScore(customerid, score);
+            var result = await _leaderBoardService.UpdateScore(model.CustomerId, model.Score);
             return Ok(result);
         }
 

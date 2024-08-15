@@ -4,7 +4,7 @@
         <name>leaderboard</name>
     </assembly>
     <members>
-        <member name="M:leaderboard.Controllers.LeaderBoardController.UpdateScore(System.Int32,System.Int32)">
+        <member name="M:leaderboard.Controllers.LeaderBoardController.UpdateScore(System.Int32,System.Decimal)">
             <summary>
             update customer score
             </summary>
